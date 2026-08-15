@@ -46,6 +46,7 @@
     <button data-tool="stitch" data-i18n="nav_stitch">画像結合</button>
     <button data-tool="grid" data-i18n="nav_grid">グリッド分割</button>
     <button data-tool="brightness" data-i18n="nav_brightness">明暗調整</button>
+    <button data-tool="autoenhance" data-i18n="nav_autoenhance">自動画質補正</button>
     <button data-tool="text" data-i18n="nav_text">テキスト追加</button>
     <button data-tool="base64" data-i18n="nav_base64">Base64変換</button>
     <button data-tool="bgremove"><span data-i18n="nav_bgremove">背景除去</span> <span style="font-size:10px;opacity:.7;">AI</span></button>
@@ -70,6 +71,7 @@
             <button class="home-card" data-goto="mosaic"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_mosaic">ぼかし・モザイク</h3><p data-i18n="home_desc_mosaic">全体または範囲を指定してぼかす</p></button>
             <button class="home-card" data-goto="round"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_round">角丸</h3><p data-i18n="home_desc_round">四隅を丸くして透過PNGで出力</p></button>
             <button class="home-card" data-goto="brightness"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_brightness">明暗調整</h3><p data-i18n="home_desc_brightness">画像を明るく、または暗くする</p></button>
+            <button class="home-card" data-goto="autoenhance"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_autoenhance">自動画質補正</h3><p data-i18n="home_desc_autoenhance">コントラストと色味を自動でいい感じに補正する</p></button>
             <button class="home-card" data-goto="text"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_text">テキスト追加</h3><p data-i18n="home_desc_text">文字を重ねる。太字・影・縁取りにも対応</p></button>
             <button class="home-card" data-goto="stitch"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_stitch">画像結合</h3><p data-i18n="home_desc_stitch">複数の画像を横や縦に並べて結合</p></button>
             <button class="home-card" data-goto="grid"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_grid">グリッド分割</h3><p data-i18n="home_desc_grid">画像を格子状に切り分ける</p></button>
@@ -344,6 +346,24 @@
             </div>
             <button class="primary" id="doBrightness" data-i18n="save_state_btn">この状態で保存</button>
             <div class="meta" id="brightnessMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 自動画質補正 -->
+      <div class="workspace" id="ws-autoenhance">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-autoenhance"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label><span data-i18n="autoenhance_strength_label">補正の強さ</span>: <span id="autoEnhanceVal">70</span>%</label>
+              <input type="range" id="autoEnhanceStrength" min="0" max="100" value="70">
+            </div>
+            <label style="font-size:12px;display:flex;gap:6px;align-items:center;color:var(--muted);">
+              <input type="checkbox" id="autoEnhanceWB" checked> <span data-i18n="autoenhance_wb_label">色かぶりも補正する</span>
+            </label>
+            <button class="primary" id="doAutoEnhance" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="autoEnhanceMeta">—</div>
           </div>
         </div>
       </div>

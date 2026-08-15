@@ -1,6 +1,6 @@
 (() => {
   const state = { img: null, file: null, naturalW:0, naturalH:0 };
-  const IMAGE_TOOLS = ['compress','resize','convert','crop','transform','filter','crt','mosaic','round','grid','brightness','text','base64','bgremove'];
+  const IMAGE_TOOLS = ['compress','resize','convert','crop','transform','filter','crt','mosaic','round','grid','brightness','autoenhance','text','base64','bgremove'];
 
   // ---- ファイル読み込み（各ツールのcanvas自体がドロップ先） ----
   function loadImageForTool(file){
@@ -90,6 +90,7 @@
     if(tool === 'round') { drawToCanvas('cv-round'); applyRoundPreview(); }
     if(tool === 'grid') { ensureGridFracs(); drawGridLines(); }
     if(tool === 'brightness') applyBrightnessPreview();
+    if(tool === 'autoenhance') applyAutoEnhancePreview();
     if(tool === 'text') applyTextPreview();
     if(tool === 'base64') drawToCanvas('cv-base64');
     if(tool === 'bgremove') drawToCanvas('cv-bgremove');
@@ -702,6 +703,81 @@
     cv.toBlob(blob => {
       download(blob, baseName() + '-brightness.png');
       document.getElementById('brightnessMeta').innerHTML = t('msg_size_done', {size: fmtBytes(blob.size)});
+    }, 'image/png');
+  });
+
+  // ---- 自動画質補正（ヒストグラム自動レベル補正＋グレーワールド仮定によるホワイトバランス） ----
+  function applyAutoEnhanceToCanvas(cv, strengthPct, doWB){
+    const strength = strengthPct/100;
+    const ctx = cv.getContext('2d');
+    const w = cv.width, h = cv.height;
+    const id = ctx.getImageData(0,0,w,h);
+    const d = id.data;
+    const n = d.length/4;
+
+    // 各チャンネルのヒストグラムから上下0.5%を切り詰めた最小・最大値を求める（オートレベル）
+    const hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)];
+    let sumR=0, sumG=0, sumB=0;
+    for(let i=0;i<d.length;i+=4){
+      hist[0][d[i]]++; hist[1][d[i+1]]++; hist[2][d[i+2]]++;
+      sumR += d[i]; sumG += d[i+1]; sumB += d[i+2];
+    }
+    const clipCount = Math.max(1, Math.floor(n*0.005));
+    function findRange(h){
+      let lo=0, hi=255, acc=0;
+      for(let v=0; v<256; v++){ acc+=h[v]; if(acc>clipCount){ lo=v; break; } }
+      acc=0;
+      for(let v=255; v>=0; v--){ acc+=h[v]; if(acc>clipCount){ hi=v; break; } }
+      if(hi<=lo){ lo=0; hi=255; }
+      return [lo,hi];
+    }
+    const [rLo,rHi] = findRange(hist[0]);
+    const [gLo,gHi] = findRange(hist[1]);
+    const [bLo,bHi] = findRange(hist[2]);
+
+    // グレーワールド仮定：R/G/Bの平均が揃うように各チャンネルを補正
+    const avgR = sumR/n, avgG = sumG/n, avgB = sumB/n;
+    const gray = (avgR+avgG+avgB)/3;
+    const wbR = doWB ? Math.min(1.6, Math.max(0.6, gray/Math.max(1,avgR))) : 1;
+    const wbG = doWB ? Math.min(1.6, Math.max(0.6, gray/Math.max(1,avgG))) : 1;
+    const wbB = doWB ? Math.min(1.6, Math.max(0.6, gray/Math.max(1,avgB))) : 1;
+
+    function stretch(v, lo, hi, wb){
+      const s = hi>lo ? (v-lo)/(hi-lo)*255 : v;
+      return Math.min(255, Math.max(0, s*wb));
+    }
+    for(let i=0;i<d.length;i+=4){
+      const nr = stretch(d[i], rLo, rHi, wbR);
+      const ng = stretch(d[i+1], gLo, gHi, wbG);
+      const nb = stretch(d[i+2], bLo, bHi, wbB);
+      d[i]   = d[i]   + (nr-d[i])*strength;
+      d[i+1] = d[i+1] + (ng-d[i+1])*strength;
+      d[i+2] = d[i+2] + (nb-d[i+2])*strength;
+    }
+    ctx.putImageData(id,0,0);
+  }
+  function applyAutoEnhancePreview(){
+    const cv = document.getElementById('cv-autoenhance');
+    drawToCanvas('cv-autoenhance');
+    applyAutoEnhanceToCanvas(cv,
+      document.getElementById('autoEnhanceStrength').value,
+      document.getElementById('autoEnhanceWB').checked);
+  }
+  document.getElementById('autoEnhanceStrength').addEventListener('input', e => {
+    document.getElementById('autoEnhanceVal').textContent = e.target.value;
+    applyAutoEnhancePreview();
+  });
+  document.getElementById('autoEnhanceWB').addEventListener('change', applyAutoEnhancePreview);
+  document.getElementById('doAutoEnhance').addEventListener('click', () => {
+    const cv = document.createElement('canvas');
+    cv.width = state.naturalW; cv.height = state.naturalH;
+    cv.getContext('2d').drawImage(state.img,0,0);
+    applyAutoEnhanceToCanvas(cv,
+      document.getElementById('autoEnhanceStrength').value,
+      document.getElementById('autoEnhanceWB').checked);
+    cv.toBlob(blob => {
+      download(blob, baseName() + '-enhanced.png');
+      document.getElementById('autoEnhanceMeta').innerHTML = t('msg_size_done', {size: fmtBytes(blob.size)});
     }, 'image/png');
   });
 
