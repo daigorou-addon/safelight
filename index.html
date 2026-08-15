@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="app_title_full">Safelight — ブラウザ完結の画像・動画ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="mark" data-i18n="badge_local">local-only</span>
+    <h1 data-i18n="brand_name">画像工房</h1>
+    <span class="brand-sub">Safelight</span>
+  </div>
+  <div class="header-right">
+    <a class="back-link" href="https://daigorou-addon.github.io/daigorou-tools/" data-i18n="back_to_top">← Daigorou-Toolsに戻る</a>
+    <p data-i18n="app_tagline">すべての処理はブラウザ内で完結。アップロード一切なし。</p>
+    <select id="langSelect" class="lang-select">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+      <option value="ko">한국어</option>
+      <option value="zh-CN">简体中文</option>
+      <option value="zh-TW">繁體中文</option>
+      <option value="es">Español</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <nav class="tools">
+    <button data-tool="home" class="active" data-i18n="nav_home">ホーム</button>
+    <button data-tool="compress" data-i18n="nav_compress">圧縮</button>
+    <button data-tool="resize" data-i18n="nav_resize">リサイズ</button>
+    <button data-tool="convert" data-i18n="nav_convert">形式変換</button>
+    <button data-tool="crop" data-i18n="nav_crop">トリミング</button>
+    <button data-tool="transform" data-i18n="nav_transform">回転・反転</button>
+    <button data-tool="filter" data-i18n="nav_filter">フィルター</button>
+    <button data-tool="crt" data-i18n="nav_crt">CRTエフェクト</button>
+    <button data-tool="mosaic" data-i18n="nav_mosaic">ぼかし・モザイク</button>
+    <button data-tool="round" data-i18n="nav_round">角丸</button>
+    <button data-tool="stitch" data-i18n="nav_stitch">画像結合</button>
+    <button data-tool="grid" data-i18n="nav_grid">グリッド分割</button>
+    <button data-tool="brightness" data-i18n="nav_brightness">明暗調整</button>
+    <button data-tool="text" data-i18n="nav_text">テキスト追加</button>
+    <button data-tool="base64" data-i18n="nav_base64">Base64変換</button>
+    <button data-tool="bgremove"><span data-i18n="nav_bgremove">背景除去</span> <span style="font-size:10px;opacity:.7;">AI</span></button>
+  </nav>
+
+  <div>
+    <div class="panel">
+
+      <!-- ホーム -->
+      <div class="workspace active" id="ws-home">
+        <div class="home-content">
+          <h2 data-i18n="home_title">Safelightへようこそ</h2>
+          <p data-i18n="home_lead">使いたいツールを選んでください。すべての処理はこの端末内だけで完結します。</p>
+          <div class="home-grid">
+            <button class="home-card" data-goto="compress"><span class="home-card-tag" data-i18n="home_tag_basic">BASIC</span><h3 data-i18n="nav_compress">圧縮</h3><p data-i18n="home_desc_compress">画質を保ちながらファイルサイズを軽くする</p></button>
+            <button class="home-card" data-goto="resize"><span class="home-card-tag" data-i18n="home_tag_basic">BASIC</span><h3 data-i18n="nav_resize">リサイズ</h3><p data-i18n="home_desc_resize">縦横比を保ったまま画像の大きさを変える</p></button>
+            <button class="home-card" data-goto="convert"><span class="home-card-tag" data-i18n="home_tag_basic">BASIC</span><h3 data-i18n="nav_convert">形式変換</h3><p data-i18n="home_desc_convert">PNG・JPEG・WebP相互に変換する</p></button>
+            <button class="home-card" data-goto="crop"><span class="home-card-tag" data-i18n="home_tag_basic">BASIC</span><h3 data-i18n="nav_crop">トリミング</h3><p data-i18n="home_desc_crop">好きな範囲を切り出す</p></button>
+            <button class="home-card" data-goto="transform"><span class="home-card-tag" data-i18n="home_tag_basic">BASIC</span><h3 data-i18n="nav_transform">回転・反転</h3><p data-i18n="home_desc_transform">画像の向きを変える</p></button>
+            <button class="home-card" data-goto="filter"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_filter">フィルター</h3><p data-i18n="home_desc_filter">グレースケール・セピア・ヴィネットなど</p></button>
+            <button class="home-card" data-goto="crt"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_crt">CRTエフェクト</h3><p data-i18n="home_desc_crt">走査線とヴィネットでブラウン管風に</p></button>
+            <button class="home-card" data-goto="mosaic"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_mosaic">ぼかし・モザイク</h3><p data-i18n="home_desc_mosaic">全体または範囲を指定してぼかす</p></button>
+            <button class="home-card" data-goto="round"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_round">角丸</h3><p data-i18n="home_desc_round">四隅を丸くして透過PNGで出力</p></button>
+            <button class="home-card" data-goto="brightness"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_brightness">明暗調整</h3><p data-i18n="home_desc_brightness">画像を明るく、または暗くする</p></button>
+            <button class="home-card" data-goto="text"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_text">テキスト追加</h3><p data-i18n="home_desc_text">文字を重ねる。太字・影・縁取りにも対応</p></button>
+            <button class="home-card" data-goto="stitch"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_stitch">画像結合</h3><p data-i18n="home_desc_stitch">複数の画像を横や縦に並べて結合</p></button>
+            <button class="home-card" data-goto="grid"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_grid">グリッド分割</h3><p data-i18n="home_desc_grid">画像を格子状に切り分ける</p></button>
+            <button class="home-card" data-goto="base64"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_base64">Base64変換</h3><p data-i18n="home_desc_base64">画像をテキストのコードに変換する</p></button>
+            <button class="home-card" data-goto="bgremove"><span class="home-card-tag home-card-tag-ai">AI</span><h3 data-i18n="nav_bgremove">背景除去</h3><p data-i18n="home_desc_bgremove">AIが被写体だけを自動で切り抜く</p></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 圧縮 -->
+      <div class="workspace" id="ws-compress">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-compress"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label><span data-i18n="compress_quality_label">画質</span>: <span id="qVal">80</span>%</label>
+              <input type="range" id="quality" min="1" max="100" value="80">
+            </div>
+            <div class="field">
+              <label data-i18n="compress_format_label">出力形式</label>
+              <select id="compressFmt">
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/webp">WebP</option>
+                <option value="image/png">PNG</option>
+              </select>
+            </div>
+            <button class="primary" id="doCompress" data-i18n="compress_btn">圧縮を実行</button>
+            <div class="meta" id="compressMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- リサイズ -->
+      <div class="workspace" id="ws-resize">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-resize"></canvas></div>
+          <div class="controls">
+            <div class="row2">
+              <div class="field">
+                <label data-i18n="resize_width_label">幅 (px)</label>
+                <input type="number" id="rW" min="1">
+              </div>
+              <div class="field">
+                <label data-i18n="resize_height_label">高さ (px)</label>
+                <input type="number" id="rH" min="1">
+              </div>
+            </div>
+            <label style="font-size:12px;display:flex;gap:6px;align-items:center;color:var(--muted);">
+              <input type="checkbox" id="rLock" checked> <span data-i18n="resize_lock_label">縦横比を固定</span>
+            </label>
+            <div class="field">
+              <label data-i18n="resize_format_label">出力形式</label>
+              <div class="chip-row" id="resizeFmtChips">
+                <span class="chip on" data-fmt="image/png">PNG</span>
+                <span class="chip" data-fmt="image/jpeg">JPEG</span>
+                <span class="chip" data-fmt="image/webp">WebP</span>
+              </div>
+            </div>
+            <button class="primary" id="doResize" data-i18n="resize_btn">リサイズを実行</button>
+            <div class="meta" id="resizeMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 形式変換 -->
+      <div class="workspace" id="ws-convert">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-convert"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label data-i18n="convert_target_label">変換先形式</label>
+              <div class="chip-row" id="fmtChips">
+                <span class="chip on" data-fmt="image/png">PNG</span>
+                <span class="chip" data-fmt="image/jpeg">JPEG</span>
+                <span class="chip" data-fmt="image/webp">WebP</span>
+              </div>
+            </div>
+            <button class="primary" id="doConvert" data-i18n="convert_btn">変換を実行</button>
+            <div class="meta" id="convertMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- トリミング -->
+      <div class="workspace" id="ws-crop">
+        <div class="stage">
+          <div class="canvas-wrap"><div id="cropOverlayWrap"><img id="cropImg"><div id="cropBox"><div class="handle nw"></div><div class="handle ne"></div><div class="handle sw"></div><div class="handle se"></div></div></div></div>
+          <div class="controls">
+            <div class="field">
+              <label data-i18n="crop_aspect_label">アスペクト比</label>
+              <div class="chip-row" id="aspectChips">
+                <span class="chip on" data-a="free" data-i18n="crop_free">自由</span>
+                <span class="chip" data-a="1">1:1</span>
+                <span class="chip" data-a="1.333">4:3</span>
+                <span class="chip" data-a="1.778">16:9</span>
+              </div>
+            </div>
+            <button class="primary" id="doCrop" data-i18n="crop_btn">トリミングを実行</button>
+            <div class="meta" id="cropMeta" data-i18n="crop_meta_default">ドラッグで範囲選択、四隅でリサイズ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 回転・反転 -->
+      <div class="workspace" id="ws-transform">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-transform"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label data-i18n="transform_rotate_label">回転</label>
+              <div class="btnrow">
+                <button class="ghost" id="rotL">↺ 90°</button>
+                <button class="ghost" id="rotR">↻ 90°</button>
+              </div>
+            </div>
+            <div class="field">
+              <label data-i18n="transform_flip_label">反転</label>
+              <div class="btnrow">
+                <button class="ghost" id="flipH" data-i18n="transform_flipH">左右反転</button>
+                <button class="ghost" id="flipV" data-i18n="transform_flipV">上下反転</button>
+              </div>
+            </div>
+            <button class="primary" id="doTransformSave" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="transformMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- フィルター -->
+      <div class="workspace" id="ws-filter">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-filter"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label data-i18n="filter_label">フィルター</label>
+              <div class="chip-row" id="filterChips">
+                <span class="chip on" data-f="none" data-i18n="filter_none">なし</span>
+                <span class="chip" data-f="grayscale" data-i18n="filter_grayscale">グレースケール</span>
+                <span class="chip" data-f="sepia" data-i18n="filter_sepia">セピア</span>
+                <span class="chip" data-f="vignette" data-i18n="filter_vignette">ヴィネット</span>
+                <span class="chip" data-f="grain" data-i18n="filter_grain">粒子(グレイン)</span>
+              </div>
+            </div>
+            <div class="field">
+              <label><span data-i18n="intensity_label">強さ</span>: <span id="filterIntVal">50</span>%</label>
+              <input type="range" id="filterIntensity" min="0" max="100" value="50">
+            </div>
+            <button class="primary" id="doFilter" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="filterMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRTエフェクト -->
+      <div class="workspace" id="ws-crt">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-crt"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label><span data-i18n="crt_scanline_label">走査線の強さ</span>: <span id="crtScanVal">50</span>%</label>
+              <input type="range" id="crtScanIntensity" min="0" max="100" value="50">
+            </div>
+            <div class="field">
+              <label><span data-i18n="crt_vignette_label">ヴィネットの強さ</span>: <span id="crtVigVal">50</span>%</label>
+              <input type="range" id="crtVigIntensity" min="0" max="100" value="50">
+            </div>
+            <div class="field">
+              <label><span data-i18n="crt_glow_label">にじみ</span>: <span id="crtGlowVal">30</span>%</label>
+              <input type="range" id="crtGlowIntensity" min="0" max="100" value="30">
+            </div>
+            <button class="primary" id="doCrt" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="crtMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ぼかし・モザイク -->
+      <div class="workspace" id="ws-mosaic">
+        <div class="stage">
+          <div class="canvas-wrap"><div id="mosaicOverlayWrap" style="position:relative;"><img id="mosaicImg" draggable="false" style="display:block;max-width:100%;max-height:480px;user-select:none;pointer-events:none;-webkit-user-drag:none;"><div id="mosaicBox" style="display:none;position:absolute;border:1.5px solid var(--accent);box-shadow:0 0 0 2000px rgba(0,0,0,.35);cursor:move;touch-action:none;"><div class="handle nw"></div><div class="handle ne"></div><div class="handle sw"></div><div class="handle se"></div></div></div></div>
+          <div class="controls">
+            <div class="field">
+              <label data-i18n="mosaic_mode_label">モード</label>
+              <div class="chip-row" id="mosaicModeChips">
+                <span class="chip" data-m="blur" data-i18n="mosaic_blur">全体をぼかす</span>
+                <span class="chip on" data-m="mosaic" data-i18n="mosaic_mosaic">範囲をモザイク</span>
+              </div>
+            </div>
+            <div class="field">
+              <label><span data-i18n="intensity_label">強さ</span>: <span id="mosaicIntVal">10</span></label>
+              <input type="range" id="mosaicIntensity" min="1" max="30" value="10">
+            </div>
+            <div class="field">
+              <label data-i18n="preview_label">プレビュー</label>
+              <canvas id="cv-mosaic-preview" style="width:100%;border:1px solid var(--line);border-radius:4px;display:block;"></canvas>
+            </div>
+            <button class="primary" id="doMosaic" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="mosaicMeta" data-i18n="mosaic_meta_default">「範囲をモザイク」ではドラッグで範囲選択</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 角丸 -->
+      <div class="workspace" id="ws-round">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-round"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label><span data-i18n="round_radius_label">角丸の半径</span>: <span id="roundVal">24</span>px</label>
+              <input type="range" id="roundRadius" min="0" max="200" value="24">
+            </div>
+            <button class="primary" id="doRound" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="roundMeta" data-i18n="round_meta_default">背景は透過PNGで出力されます</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 画像結合 -->
+      <div class="workspace" id="ws-stitch">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-stitch"></canvas></div>
+          <div class="controls">
+            <div class="addfile" id="stitchAdd" data-i18n="stitch_add_btn">＋ 画像を追加（複数選択可）</div>
+            <input type="file" id="stitchInput" accept="image/*" multiple style="display:none;">
+            <div class="thumbs" id="stitchThumbs"></div>
+            <div class="field">
+              <label data-i18n="stitch_dir_label">結合方向</label>
+              <div class="chip-row" id="stitchDirChips">
+                <span class="chip on" data-d="h" data-i18n="stitch_h">横に並べる</span>
+                <span class="chip" data-d="v" data-i18n="stitch_v">縦に並べる</span>
+              </div>
+            </div>
+            <div class="field">
+              <label><span data-i18n="stitch_gap_label">間隔</span>: <span id="stitchGapVal">0</span>px</label>
+              <input type="range" id="stitchGap" min="0" max="60" value="0">
+            </div>
+            <button class="primary" id="doStitch" data-i18n="stitch_btn">結合してダウンロード</button>
+            <div class="meta" id="stitchMeta" data-i18n="stitch_meta_default">最初に読み込んだ画像は使いません。ここに直接追加してください</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- グリッド分割 -->
+      <div class="workspace" id="ws-grid">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-grid"></canvas></div>
+          <div class="controls">
+            <div class="row2">
+              <div class="field">
+                <label data-i18n="grid_cols_label">横分割数</label>
+                <input type="number" id="gridCols" min="1" max="10" value="2">
+              </div>
+              <div class="field">
+                <label data-i18n="grid_rows_label">縦分割数</label>
+                <input type="number" id="gridRows" min="1" max="10" value="2">
+              </div>
+            </div>
+            <button class="primary" id="doGrid" data-i18n="grid_btn">分割してダウンロード</button>
+            <div class="meta" id="gridMeta" data-i18n="grid_meta_default">タイルを個別のPNGファイルとして順にダウンロードします</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 明暗調整 -->
+      <div class="workspace" id="ws-brightness">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-brightness"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label><span data-i18n="brightness_label">明るさ</span>: <span id="brightVal">0</span></label>
+              <input type="range" id="brightRange" min="-100" max="100" value="0">
+            </div>
+            <button class="primary" id="doBrightness" data-i18n="save_state_btn">この状態で保存</button>
+            <div class="meta" id="brightnessMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- テキスト追加 -->
+      <div class="workspace" id="ws-text">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-text"></canvas></div>
+          <div class="controls">
+            <div class="field">
+              <label data-i18n="text_content_label">テキスト</label>
+              <input type="text" id="textContent" placeholder="Safelight">
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label data-i18n="text_font_label">フォント</label>
+                <select id="textFont">
+                  <option value="'Zen Kaku Gothic New', sans-serif" data-i18n="text_font_gothic">ゴシック体</option>
+                  <option value="serif" data-i18n="text_font_serif">明朝体</option>
+                  <option value="monospace" data-i18n="text_font_mono">等幅</option>
+                </select>
+              </div>
+              <div class="field">
+                <label data-i18n="text_size_label">サイズ</label>
+                <input type="number" id="textSize" min="8" max="400" value="48">
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label data-i18n="text_color_label">文字色</label>
+                <input type="color" id="textColor" value="#ffffff" style="height:38px;padding:2px;">
+              </div>
+              <div class="field">
+                <label data-i18n="text_outline_color_label">縁取り色</label>
+                <input type="color" id="textOutlineColor" value="#000000" style="height:38px;padding:2px;">
+              </div>
+            </div>
+            <div class="field">
+              <label data-i18n="text_style_label">スタイル</label>
+              <div class="chip-row">
+                <span class="chip" id="textBoldChip" data-i18n="text_bold">太字</span>
+                <span class="chip" id="textItalicChip" data-i18n="text_italic">斜体</span>
+              </div>
+            </div>
+            <div class="field">
+              <label data-i18n="text_effect_label">効果</label>
+              <div class="chip-row" id="textEffectChips">
+                <span class="chip on" data-e="none" data-i18n="text_effect_none">なし</span>
+                <span class="chip" data-e="shadow" data-i18n="text_effect_shadow">影文字</span>
+                <span class="chip" data-e="outline" data-i18n="text_effect_outline">袋文字</span>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label data-i18n="text_x_label">横位置</label>
+                <input type="range" id="textX" min="0" max="100" value="50">
+              </div>
+              <div class="field">
+                <label data-i18n="text_y_label">縦位置</label>
+                <input type="range" id="textY" min="0" max="100" value="50">
+              </div>
+            </div>
+            <div class="meta" data-i18n="text_drag_hint">プレビュー上でテキストをドラッグして移動できます</div>
+            <div class="btnrow">
+              <button class="primary" id="doText" data-i18n="save_state_btn">この状態で保存</button>
+              <button class="ghost" id="clearText" data-i18n="text_clear_btn">テキストを削除</button>
+            </div>
+            <div class="meta" id="textMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Base64変換 -->
+      <div class="workspace" id="ws-base64">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-base64"></canvas></div>
+          <div class="controls">
+            <button class="primary" id="doBase64" data-i18n="base64_btn">Base64に変換</button>
+            <textarea id="base64Output" readonly style="width:100%;height:140px;font-family:var(--mono);font-size:11px;background:var(--dark-2);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:8px;resize:vertical;"></textarea>
+            <button class="ghost" id="copyBase64" data-i18n="base64_copy_btn">コピー</button>
+            <div class="meta" id="base64Meta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 背景除去 -->
+      <div class="workspace" id="ws-bgremove">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-bgremove"></canvas></div>
+          <div class="controls">
+            <button class="primary" id="doBgRemove" data-i18n="bgremove_btn">背景を除去</button>
+            <div class="meta" id="bgremoveMeta" data-i18n="bgremove_meta_default">初回はAIモデル(数十MB)をダウンロードします。処理は端末内で行われ、画像は外部送信されません</div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</main>
+
+<a id="dlLink" class="dl" download></a>
+<footer>
+  <div data-i18n="footer_text">すべての処理はこの端末内で行われます。ファイルはどこにも送信されません。</div>
+  <div class="footer-copyright">Copyright (C) 2026 daigorou-tools. All rights reserved.</div>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
