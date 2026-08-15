@@ -6,7 +6,7 @@
 const I18N = {
 
 ja: {
-  app_title_full: "Safelight — ブラウザ完結の画像・動画ツール",
+  app_title_full: "Safelight — ブラウザ完結の画像ツール",
   badge_local: "local-only",
   brand_name: "画像工房",
   app_tagline: "すべての処理はブラウザ内で完結。",
@@ -77,7 +77,7 @@ ja: {
 },
 
 en: {
-  app_title_full: "Safelight — Browser-based Image & Video Tools",
+  app_title_full: "Safelight — Browser-based Image Tools",
   badge_local: "local-only",
   brand_name: "Safelight",
   app_tagline: "Everything runs in your browser.",
@@ -148,7 +148,7 @@ en: {
 },
 
 ko: {
-  app_title_full: "Safelight — 브라우저 완결형 이미지·동영상 도구",
+  app_title_full: "Safelight — 브라우저 완결형 이미지 도구",
   badge_local: "local-only",
   brand_name: "Safelight",
   app_tagline: "모든 처리는 브라우저 안에서 완결됩니다.",
@@ -219,7 +219,7 @@ ko: {
 },
 
 "zh-CN": {
-  app_title_full: "Safelight — 浏览器端图片·视频工具",
+  app_title_full: "Safelight — 浏览器端图片工具",
   badge_local: "local-only",
   brand_name: "Safelight",
   app_tagline: "所有处理均在浏览器内完成。",
@@ -290,7 +290,7 @@ ko: {
 },
 
 "zh-TW": {
-  app_title_full: "Safelight — 瀏覽器完結圖片・影片工具",
+  app_title_full: "Safelight — 瀏覽器完結圖片工具",
   badge_local: "local-only",
   brand_name: "Safelight",
   app_tagline: "所有處理皆在瀏覽器內完成。",
@@ -361,7 +361,7 @@ ko: {
 },
 
 es: {
-  app_title_full: "Safelight — Herramientas de imagen y vídeo en el navegador",
+  app_title_full: "Safelight — Herramientas de imagen en el navegador",
   badge_local: "local-only",
   brand_name: "Safelight",
   app_tagline: "Todo se procesa en tu navegador.",
