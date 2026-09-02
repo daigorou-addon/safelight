@@ -131,8 +131,61 @@ main{
   grid-template-columns:196px 1fr;
   gap:24px;
 }
-@media (max-width:760px){
-  main{grid-template-columns:1fr;padding:20px 16px 60px;}
+@media (max-width:1023px) and (min-width:600px){
+  main{grid-template-columns:150px 1fr; gap:16px; padding:22px 20px 60px;}
+  nav.tools{padding:10px 8px;}
+  nav.tools button{font-size:12.5px; padding:9px 8px 9px 10px;}
+}
+@media (max-width:599px){
+  main{
+    grid-template-columns:1fr;
+    padding:16px 14px 50px;
+    gap:14px;
+  }
+  nav.tools{
+    position:sticky;
+    top:0;
+    z-index:5;
+    flex-direction:row;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    white-space:nowrap;
+    padding:10px 10px;
+    gap:2px;
+    align-self:auto;
+  }
+  nav.tools::before, nav.tools::after{display:none;}
+  nav.tools::-webkit-scrollbar{height:4px;}
+  nav.tools::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  nav.tools button{
+    flex:0 0 auto;
+    border-left:none;
+    border-bottom:2px solid transparent;
+    border-radius:4px;
+    padding:9px 12px;
+    margin:0;
+  }
+  nav.tools button.active{
+    border-left-color:transparent;
+    border-bottom-color:var(--safelight);
+    background:rgba(41,224,196,.14);
+  }
+  nav.tools .nav-label{
+    flex:0 0 auto;
+    border-top:none;
+    border-left:1px solid var(--line-soft);
+    margin-top:0;
+    padding:0 10px 0 14px;
+    display:flex;
+    align-items:center;
+  }
+  .panel{padding:18px;}
+  header{padding:18px 16px;}
+  header h1{font-size:18px;}
+  .home-grid{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:380px){
+  .home-grid{grid-template-columns:1fr;}
 }
 
 /* ---------- ツールナビ：フィルムストリップ ---------- */
