@@ -48,6 +48,8 @@
     <button data-tool="brightness" data-i18n="nav_brightness">明暗調整</button>
     <button data-tool="autoenhance" data-i18n="nav_autoenhance">自動画質補正</button>
     <button data-tool="text" data-i18n="nav_text">テキスト追加</button>
+    <button data-tool="exifremove" data-i18n="nav_exifremove">Exif削除</button>
+    <button data-tool="pdf" data-i18n="nav_pdf">PDF作成</button>
     <button data-tool="base64" data-i18n="nav_base64">Base64変換</button>
     <button data-tool="bgremove"><span data-i18n="nav_bgremove">背景除去</span> <span style="font-size:10px;opacity:.7;">AI</span></button>
   </nav>
@@ -73,8 +75,10 @@
             <button class="home-card" data-goto="brightness"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_brightness">明暗調整</h3><p data-i18n="home_desc_brightness">画像を明るく、または暗くする</p></button>
             <button class="home-card" data-goto="autoenhance"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_autoenhance">自動画質補正</h3><p data-i18n="home_desc_autoenhance">コントラストと色味を自動でいい感じに補正する</p></button>
             <button class="home-card" data-goto="text"><span class="home-card-tag" data-i18n="home_tag_fx">FX</span><h3 data-i18n="nav_text">テキスト追加</h3><p data-i18n="home_desc_text">文字を重ねる。太字・影・縁取りにも対応</p></button>
+            <button class="home-card" data-goto="exifremove"><span class="home-card-tag" data-i18n="home_tag_basic">BASIC</span><h3 data-i18n="nav_exifremove">Exif削除</h3><p data-i18n="home_desc_exifremove">撮影日時や位置情報などの付随情報を画像から削除する</p></button>
             <button class="home-card" data-goto="stitch"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_stitch">画像結合</h3><p data-i18n="home_desc_stitch">複数の画像を横や縦に並べて結合</p></button>
             <button class="home-card" data-goto="grid"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_grid">グリッド分割</h3><p data-i18n="home_desc_grid">画像を格子状に切り分ける</p></button>
+            <button class="home-card" data-goto="pdf"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_pdf">PDF作成</h3><p data-i18n="home_desc_pdf">複数の画像をまとめて1つのPDFファイルにする</p></button>
             <button class="home-card" data-goto="base64"><span class="home-card-tag" data-i18n="home_tag_multi">MULTI</span><h3 data-i18n="nav_base64">Base64変換</h3><p data-i18n="home_desc_base64">画像をテキストのコードに変換する</p></button>
             <button class="home-card" data-goto="bgremove"><span class="home-card-tag home-card-tag-ai">AI</span><h3 data-i18n="nav_bgremove">背景除去</h3><p data-i18n="home_desc_bgremove">AIが被写体だけを自動で切り抜く</p></button>
           </div>
@@ -432,6 +436,43 @@
               <button class="ghost" id="clearText" data-i18n="text_clear_btn">テキストを削除</button>
             </div>
             <div class="meta" id="textMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exif削除 -->
+      <div class="workspace" id="ws-exifremove">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-exifremove"></canvas></div>
+          <div class="controls">
+            <button class="primary" id="doExifRemove" data-i18n="exifremove_btn">Exifを削除してダウンロード</button>
+            <div class="meta" id="exifremoveMeta" data-i18n="exifremove_meta_default">画像をドロップすると、位置情報や撮影データの有無を確認して削除します</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF作成 -->
+      <div class="workspace" id="ws-pdf">
+        <div class="stage">
+          <div class="canvas-wrap"><canvas id="cv-pdf"></canvas></div>
+          <div class="controls">
+            <div class="addfile" id="pdfAdd" data-i18n="pdf_add_btn">＋ 画像を追加（複数選択可）</div>
+            <input type="file" id="pdfInput" accept="image/*" multiple style="display:none;">
+            <div class="thumbs" id="pdfThumbs"></div>
+            <div class="field">
+              <label data-i18n="pdf_pagesize_label">ページサイズ</label>
+              <div class="chip-row" id="pdfPageSizeChips">
+                <span class="chip on" data-s="fit" data-i18n="pdf_pagesize_fit">画像サイズに合わせる</span>
+                <span class="chip" data-s="a4" data-i18n="pdf_pagesize_a4">A4</span>
+                <span class="chip" data-s="letter" data-i18n="pdf_pagesize_letter">レター</span>
+              </div>
+            </div>
+            <div class="field">
+              <label><span data-i18n="compress_quality_label">画質</span>: <span id="pdfQVal">85</span>%</label>
+              <input type="range" id="pdfQuality" min="1" max="100" value="85">
+            </div>
+            <button class="primary" id="doPdf" data-i18n="pdf_btn">PDFを作成してダウンロード</button>
+            <div class="meta" id="pdfMeta" data-i18n="pdf_meta_default">追加した順に1画像＝1ページのPDFになります</div>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 (() => {
   const state = { img: null, file: null, naturalW:0, naturalH:0 };
-  const IMAGE_TOOLS = ['compress','resize','convert','crop','transform','filter','crt','mosaic','round','grid','brightness','autoenhance','text','base64','bgremove'];
+  const IMAGE_TOOLS = ['compress','resize','convert','crop','transform','filter','crt','mosaic','round','grid','brightness','autoenhance','text','base64','bgremove','exifremove'];
 
   // ---- ファイル読み込み（各ツールのcanvas自体がドロップ先） ----
   function loadImageForTool(file){
@@ -67,6 +67,8 @@
       document.getElementById('ws-' + btn.dataset.tool).classList.add('active');
       refreshDropzoneStates();
       if(btn.dataset.tool === 'stitch') drawStitchPreview();
+      if(btn.dataset.tool === 'pdf') drawPdfPreview();
+      window.scrollTo({ top: 0, behavior: 'instant' });
     });
   });
 
@@ -94,6 +96,7 @@
     if(tool === 'text') applyTextPreview();
     if(tool === 'base64') drawToCanvas('cv-base64');
     if(tool === 'bgremove') drawToCanvas('cv-bgremove');
+    if(tool === 'exifremove') { drawToCanvas('cv-exifremove'); showExifInfo(); }
   }
 
   // ---- 高品質な縮小描画（段階的に半分ずつ縮小してから最終サイズへ） ----
@@ -1175,6 +1178,368 @@
       meta.innerHTML = t('msg_size_done', {size: fmtBytes(blob.size)});
     } catch(e){
       meta.textContent = t('msg_fail_online', {err: e.message});
+    } finally {
+      btn.disabled = false;
+      btn.textContent = prevLabel;
+    }
+  });
+
+  // ---- Exif削除（画像を再エンコードせず、バイナリからメタデータ部分だけを取り除く） ----
+
+  // -- TIFF/Exif の値読み取り（ドロップ時にExif情報を表示するための簡易パーサー） --
+  function exifU16(bytes, o, le){ return le ? (bytes[o] | (bytes[o+1]<<8)) : ((bytes[o]<<8) | bytes[o+1]); }
+  function exifU32(bytes, o, le){
+    return (le
+      ? (bytes[o] | (bytes[o+1]<<8) | (bytes[o+2]<<16) | (bytes[o+3]<<24))
+      : ((bytes[o]<<24) | (bytes[o+1]<<16) | (bytes[o+2]<<8) | bytes[o+3])) >>> 0;
+  }
+  function exifRational(bytes, o, le){
+    const num = exifU32(bytes, o, le), den = exifU32(bytes, o+4, le);
+    return den === 0 ? 0 : num/den;
+  }
+  function exifAscii(bytes, o, len){
+    let s = '';
+    for(let i=0; i<len && o+i<bytes.length; i++){
+      const c = bytes[o+i];
+      if(c === 0) break;
+      s += String.fromCharCode(c);
+    }
+    return s;
+  }
+  const EXIF_TYPE_SIZE = {1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};
+  function exifParseIFD(bytes, tiffStart, ifdOffset, le){
+    const entries = {};
+    if(tiffStart+ifdOffset+2 > bytes.length) return entries;
+    const count = exifU16(bytes, tiffStart+ifdOffset, le);
+    let p = tiffStart+ifdOffset+2;
+    for(let i=0; i<count && p+12<=bytes.length; i++){
+      const tag = exifU16(bytes, p, le);
+      const type = exifU16(bytes, p+2, le);
+      const num = exifU32(bytes, p+4, le);
+      const size = (EXIF_TYPE_SIZE[type] || 1) * num;
+      const valueOffset = size <= 4 ? p+8 : tiffStart + exifU32(bytes, p+8, le);
+      entries[tag] = { type, num, valueOffset };
+      p += 12;
+    }
+    return entries;
+  }
+  function readExifJpegInfo(bytes){
+    const info = { hasExif:false, hasGPS:false };
+    let offset = 2;
+    while(offset+4 <= bytes.length && bytes[offset] === 0xFF){
+      const marker = bytes[offset+1];
+      if(marker === 0xDA || marker === 0xD9) break;
+      const length = (bytes[offset+2] << 8) | bytes[offset+3];
+      if(marker === 0xE1){
+        const s = offset+4;
+        if(bytes[s]===0x45 && bytes[s+1]===0x78 && bytes[s+2]===0x69 && bytes[s+3]===0x66 && bytes[s+4]===0 && bytes[s+5]===0){
+          info.hasExif = true;
+          const tiffStart = s+6;
+          const le = bytes[tiffStart]===0x49 && bytes[tiffStart+1]===0x49; // "II"=little-endian, "MM"=big-endian
+          const ifd0Offset = exifU32(bytes, tiffStart+4, le);
+          const ifd0 = exifParseIFD(bytes, tiffStart, ifd0Offset, le);
+          if(ifd0[0x010F]) info.make = exifAscii(bytes, ifd0[0x010F].valueOffset, ifd0[0x010F].num).trim();
+          if(ifd0[0x0110]) info.model = exifAscii(bytes, ifd0[0x0110].valueOffset, ifd0[0x0110].num).trim();
+          if(ifd0[0x0132]) info.dateTime = exifAscii(bytes, ifd0[0x0132].valueOffset, ifd0[0x0132].num).trim();
+          if(ifd0[0x8769]){ // Exif SubIFD — DateTimeOriginal(0x9003)は多くのカメラでここに入る
+            const subIFDOffset = exifU32(bytes, ifd0[0x8769].valueOffset, le);
+            const sub = exifParseIFD(bytes, tiffStart, subIFDOffset, le);
+            if(!info.dateTime && sub[0x9003]) info.dateTime = exifAscii(bytes, sub[0x9003].valueOffset, sub[0x9003].num).trim();
+            else if(!info.dateTime && sub[0x9004]) info.dateTime = exifAscii(bytes, sub[0x9004].valueOffset, sub[0x9004].num).trim();
+          }
+          if(ifd0[0x8825]){
+            info.hasGPS = true;
+            const gpsIFDOffset = exifU32(bytes, ifd0[0x8825].valueOffset, le);
+            const gps = exifParseIFD(bytes, tiffStart, gpsIFDOffset, le);
+            if(gps[1] && gps[2] && gps[3] && gps[4]){
+              const dms = e => exifRational(bytes,e.valueOffset,le) + exifRational(bytes,e.valueOffset+8,le)/60 + exifRational(bytes,e.valueOffset+16,le)/3600;
+              let lat = dms(gps[2]); if(exifAscii(bytes, gps[1].valueOffset, 1) === 'S') lat = -lat;
+              let lon = dms(gps[4]); if(exifAscii(bytes, gps[3].valueOffset, 1) === 'W') lon = -lon;
+              if(isFinite(lat) && isFinite(lon)){ info.latitude = lat; info.longitude = lon; }
+            }
+          }
+        }
+        offset += 2+length; continue;
+      }
+      offset += 2+length;
+    }
+    return info;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function formatExifInfoHtml(info){
+    if(!info.hasExif) return t('exif_info_none');
+    const rows = [];
+    if(info.make) rows.push(`<b>${t('exif_field_make')}:</b> ${escapeHtml(info.make)}`);
+    if(info.model) rows.push(`<b>${t('exif_field_model')}:</b> ${escapeHtml(info.model)}`);
+    if(info.dateTime) rows.push(`<b>${t('exif_field_datetime')}:</b> ${escapeHtml(info.dateTime)}`);
+    if(info.hasGPS && typeof info.latitude === 'number' && typeof info.longitude === 'number'){
+      rows.push(`<b>${t('exif_field_gps')}:</b> ${info.latitude.toFixed(5)}, ${info.longitude.toFixed(5)}`);
+    }
+    if(rows.length === 0) return t('exif_info_simple_yes');
+    return `<div>${t('exif_info_detected_label')}</div>` + rows.map(r => `<div>${r}</div>`).join('');
+  }
+  async function showExifInfo(){
+    const meta = document.getElementById('exifremoveMeta');
+    if(!state.file || !meta) return;
+    const buffer = await state.file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let html;
+    if(bytes[0] === 0xFF && bytes[1] === 0xD8){
+      html = formatExifInfoHtml(readExifJpegInfo(bytes));
+    } else if(bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47){
+      html = stripPngMetadata(buffer).hadExif ? t('exif_info_simple_yes') : t('exif_info_simple_no');
+    } else if(bytes.length >= 12 && String.fromCharCode(bytes[0],bytes[1],bytes[2],bytes[3]) === 'RIFF' && String.fromCharCode(bytes[8],bytes[9],bytes[10],bytes[11]) === 'WEBP'){
+      html = stripWebpMetadata(buffer).hadExif ? t('exif_info_simple_yes') : t('exif_info_simple_no');
+    } else {
+      html = t('exif_info_none');
+    }
+    // 表示している間にツールを切り替えられていたら上書きしない
+    if(document.querySelector('nav.tools button.active').dataset.tool === 'exifremove' && state.file){
+      meta.innerHTML = html;
+    }
+  }
+
+  function stripJpegExif(buffer){
+    const bytes = new Uint8Array(buffer);
+    if(bytes.length < 4 || bytes[0] !== 0xFF || bytes[1] !== 0xD8){
+      return { parts: [bytes], hadExif:false, hadGPS:false };
+    }
+    const parts = [bytes.subarray(0,2)];
+    let offset = 2, hadExif = false, hadGPS = false;
+    while(offset + 2 <= bytes.length && bytes[offset] === 0xFF){
+      const marker = bytes[offset+1];
+      if(marker === 0xD9){ parts.push(bytes.subarray(offset, offset+2)); offset += 2; break; }
+      if(marker === 0xDA){ parts.push(bytes.subarray(offset)); offset = bytes.length; break; }
+      if(offset + 4 > bytes.length) break;
+      const length = (bytes[offset+2] << 8) | bytes[offset+3];
+      const segEnd = offset + 2 + length;
+      if(marker === 0xE1){ // APP1: Exif
+        hadExif = true;
+        for(let i = offset+4; i < segEnd-1 && i < bytes.length-1; i++){
+          if((bytes[i] === 0x88 && bytes[i+1] === 0x25) || (bytes[i] === 0x25 && bytes[i+1] === 0x88)){ hadGPS = true; break; }
+        }
+        offset = segEnd; continue;
+      }
+      if(marker === 0xFE){ offset = segEnd; continue; } // COM
+      parts.push(bytes.subarray(offset, Math.min(segEnd, bytes.length)));
+      offset = segEnd;
+    }
+    return { parts, hadExif, hadGPS };
+  }
+
+  function stripPngMetadata(buffer){
+    const bytes = new Uint8Array(buffer);
+    const sig = [137,80,78,71,13,10,26,10];
+    for(let i=0;i<8;i++){ if(bytes[i] !== sig[i]) return { parts:[bytes], hadExif:false, hadGPS:false }; }
+    const STRIP = new Set(['eXIf','tEXt','zTXt','iTXt','tIME']);
+    const parts = [bytes.subarray(0,8)];
+    let offset = 8, hadExif = false;
+    while(offset + 8 <= bytes.length){
+      const length = ((bytes[offset]<<24) | (bytes[offset+1]<<16) | (bytes[offset+2]<<8) | bytes[offset+3]) >>> 0;
+      const type = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+      const chunkEnd = Math.min(offset + 8 + length + 4, bytes.length);
+      if(STRIP.has(type)){ hadExif = true; offset = chunkEnd; continue; }
+      parts.push(bytes.subarray(offset, chunkEnd));
+      offset = chunkEnd;
+      if(type === 'IEND') break;
+    }
+    return { parts, hadExif, hadGPS:false };
+  }
+
+  function stripWebpMetadata(buffer){
+    const bytes = new Uint8Array(buffer);
+    if(bytes.length < 12 || String.fromCharCode(bytes[0],bytes[1],bytes[2],bytes[3]) !== 'RIFF' ||
+       String.fromCharCode(bytes[8],bytes[9],bytes[10],bytes[11]) !== 'WEBP'){
+      return { parts:[bytes], hadExif:false, hadGPS:false };
+    }
+    const kept = [];
+    let offset = 12, hadExif = false;
+    while(offset + 8 <= bytes.length){
+      const fourCC = String.fromCharCode(bytes[offset],bytes[offset+1],bytes[offset+2],bytes[offset+3]);
+      const size = (bytes[offset+4] | (bytes[offset+5]<<8) | (bytes[offset+6]<<16) | (bytes[offset+7]<<24)) >>> 0;
+      const dataEnd = offset + 8 + size;
+      const padded = Math.min(size % 2 === 1 ? dataEnd+1 : dataEnd, bytes.length);
+      if(fourCC === 'EXIF' || fourCC === 'XMP '){ hadExif = true; }
+      else { kept.push(bytes.subarray(offset, padded)); }
+      offset = padded;
+    }
+    const totalDataLen = kept.reduce((s,p) => s+p.length, 0);
+    const header = new Uint8Array(12);
+    header.set([0x52,0x49,0x46,0x46], 0);
+    const riffSize = 4 + totalDataLen;
+    header[4] = riffSize & 0xFF; header[5] = (riffSize>>8) & 0xFF;
+    header[6] = (riffSize>>16) & 0xFF; header[7] = (riffSize>>24) & 0xFF;
+    header.set([0x57,0x45,0x42,0x50], 8);
+    return { parts: [header, ...kept], hadExif, hadGPS:false };
+  }
+
+  document.getElementById('doExifRemove').addEventListener('click', async () => {
+    if(!state.file) return;
+    const buffer = await state.file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let result, mime;
+    if(bytes[0] === 0xFF && bytes[1] === 0xD8){ result = stripJpegExif(buffer); mime = 'image/jpeg'; }
+    else if(bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47){ result = stripPngMetadata(buffer); mime = 'image/png'; }
+    else if(bytes.length >= 12 && String.fromCharCode(bytes[0],bytes[1],bytes[2],bytes[3]) === 'RIFF' && String.fromCharCode(bytes[8],bytes[9],bytes[10],bytes[11]) === 'WEBP'){ result = stripWebpMetadata(buffer); mime = 'image/webp'; }
+    else { result = { parts:[bytes], hadExif:false, hadGPS:false }; mime = state.file.type || 'application/octet-stream'; }
+    const blob = new Blob(result.parts, { type: mime });
+    const ext = mime === 'image/jpeg' ? 'jpg' : (mime === 'image/webp' ? 'webp' : (mime === 'image/png' ? 'png' : baseName().split('.').pop()));
+    download(blob, baseName() + '-noexif.' + ext);
+    const key = result.hadGPS ? 'msg_exif_done_gps' : (result.hadExif ? 'msg_exif_done_meta' : 'msg_exif_done_none');
+    document.getElementById('exifremoveMeta').innerHTML = t(key, { size: fmtBytes(blob.size) });
+  });
+
+  // ---- PDF作成（複数画像を1画像=1ページのPDFに。外部ライブラリなし、端末内で直接PDFバイナリを生成） ----
+  let pdfImages = [];
+  const pdfAddEl = document.getElementById('pdfAdd');
+  function addPdfFiles(fileList){
+    [...fileList].forEach(f => {
+      if(!f.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(f);
+      const img = new Image();
+      img.onload = () => { pdfImages.push(img); renderPdfThumbs(); drawPdfPreview(); };
+      img.src = url;
+    });
+  }
+  pdfAddEl.addEventListener('click', () => document.getElementById('pdfInput').click());
+  pdfAddEl.addEventListener('dragover', e => { e.preventDefault(); pdfAddEl.classList.add('drag'); });
+  pdfAddEl.addEventListener('dragleave', () => pdfAddEl.classList.remove('drag'));
+  pdfAddEl.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation(); pdfAddEl.classList.remove('drag');
+    addPdfFiles(e.dataTransfer.files);
+  });
+  document.getElementById('pdfInput').addEventListener('change', e => {
+    addPdfFiles(e.target.files);
+    e.target.value = '';
+  });
+  function renderPdfThumbs(){
+    const wrap = document.getElementById('pdfThumbs');
+    wrap.innerHTML = '';
+    pdfImages.forEach((img, i) => {
+      const th = document.createElement('div');
+      th.className = 'th';
+      th.innerHTML = `<img src="${img.src}"><button data-i="${i}">×</button>`;
+      th.querySelector('button').addEventListener('click', () => {
+        pdfImages.splice(i,1);
+        renderPdfThumbs();
+        drawPdfPreview();
+      });
+      wrap.appendChild(th);
+    });
+  }
+  document.getElementById('pdfQuality').addEventListener('input', e => {
+    document.getElementById('pdfQVal').textContent = e.target.value;
+  });
+  let pdfPageSize = 'fit';
+  document.querySelectorAll('#pdfPageSizeChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#pdfPageSizeChips .chip').forEach(c => c.classList.remove('on'));
+      chip.classList.add('on');
+      pdfPageSize = chip.dataset.s;
+    });
+  });
+  function drawPdfPreview(){
+    const cv = document.getElementById('cv-pdf');
+    const ctx = cv.getContext('2d');
+    if(pdfImages.length === 0){ cv.width = 1; cv.height = 1; ctx.clearRect(0,0,1,1); return; }
+    const img = pdfImages[0];
+    const scale = Math.min(460/img.naturalWidth, 480/img.naturalHeight, 1);
+    cv.width = Math.round(img.naturalWidth*scale);
+    cv.height = Math.round(img.naturalHeight*scale);
+    drawImageHQ(ctx, img, cv.width, cv.height);
+  }
+  const PDF_PAGE_SIZES = { a4: [595.28, 841.89], letter: [612, 792] };
+  const PDF_PAGE_MARGIN = 24; // pt
+
+  async function buildPdfFromImages(images, quality, pageSizeMode){
+    const MAX_PT = 14400; // PDFのMediaBox上限
+    const parts = []; let length = 0;
+    function push(data){
+      const b = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+      parts.push(b); length += b.length; return b;
+    }
+    const offsets = {};
+    push('%PDF-1.4\n');
+    push(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+
+    const pages = [];
+    for(const img of images){
+      let iw = img.naturalWidth, ih = img.naturalHeight;
+      const clamp = Math.min(1, MAX_PT/iw, MAX_PT/ih);
+      iw = Math.max(1, Math.round(iw*clamp)); ih = Math.max(1, Math.round(ih*clamp));
+      const cv = document.createElement('canvas');
+      cv.width = iw; cv.height = ih;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,iw,ih); // JPEGは透過を持たないため白背景で塗る
+      drawImageHQ(ctx, img, iw, ih);
+      const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', quality));
+      const jpegBytes = new Uint8Array(await blob.arrayBuffer());
+
+      let pageW = iw, pageH = ih, drawW = iw, drawH = ih, drawX = 0, drawY = 0;
+      if(pageSizeMode === 'a4' || pageSizeMode === 'letter'){
+        const base = PDF_PAGE_SIZES[pageSizeMode];
+        const landscape = iw > ih;
+        pageW = landscape ? Math.max(base[0], base[1]) : Math.min(base[0], base[1]);
+        pageH = landscape ? Math.min(base[0], base[1]) : Math.max(base[0], base[1]);
+        const availW = pageW - PDF_PAGE_MARGIN*2, availH = pageH - PDF_PAGE_MARGIN*2;
+        const fit = Math.min(availW/iw, availH/ih);
+        drawW = iw*fit; drawH = ih*fit;
+        drawX = (pageW - drawW)/2; drawY = (pageH - drawH)/2;
+      }
+      pages.push({ iw, ih, pageW, pageH, drawW, drawH, drawX, drawY, jpegBytes });
+    }
+
+    const n = pages.length;
+    const totalObjs = 2 + n*3;
+    offsets[1] = length;
+    push(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
+    const kids = pages.map((_,i) => `${3+i*3} 0 R`).join(' ');
+    offsets[2] = length;
+    push(`2 0 obj\n<< /Type /Pages /Kids [ ${kids} ] /Count ${n} >>\nendobj\n`);
+
+    pages.forEach((p, i) => {
+      const pageNum = 3+i*3, contentNum = 4+i*3, imageNum = 5+i*3;
+      const content = `q ${p.drawW} 0 0 ${p.drawH} ${p.drawX} ${p.drawY} cm /Im0 Do Q`;
+      const contentBytes = new TextEncoder().encode(content);
+
+      offsets[pageNum] = length;
+      push(`${pageNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${p.pageW} ${p.pageH}] /Resources << /XObject << /Im0 ${imageNum} 0 R >> >> /Contents ${contentNum} 0 R >>\nendobj\n`);
+
+      offsets[contentNum] = length;
+      push(`${contentNum} 0 obj\n<< /Length ${contentBytes.length} >>\nstream\n`);
+      push(contentBytes);
+      push(`\nendstream\nendobj\n`);
+
+      offsets[imageNum] = length;
+      push(`${imageNum} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${p.iw} /Height ${p.ih} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpegBytes.length} >>\nstream\n`);
+      push(p.jpegBytes);
+      push(`\nendstream\nendobj\n`);
+    });
+
+    const xrefStart = length;
+    let xref = `xref\n0 ${totalObjs+1}\n0000000000 65535 f \n`;
+    for(let i=1;i<=totalObjs;i++){
+      xref += String(offsets[i]).padStart(10,'0') + ' 00000 n \n';
+    }
+    push(xref);
+    push(`trailer\n<< /Size ${totalObjs+1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+  document.getElementById('doPdf').addEventListener('click', async () => {
+    const meta = document.getElementById('pdfMeta');
+    if(pdfImages.length === 0){ meta.textContent = t('msg_pdf_need_images'); return; }
+    const btn = document.getElementById('doPdf');
+    btn.disabled = true;
+    const prevLabel = btn.textContent;
+    btn.textContent = t('label_processing');
+    try{
+      const quality = document.getElementById('pdfQuality').value/100;
+      const blob = await buildPdfFromImages(pdfImages, quality, pdfPageSize);
+      download(blob, 'images.pdf');
+      meta.innerHTML = t('msg_pdf_done', { count: pdfImages.length, size: fmtBytes(blob.size) });
     } finally {
       btn.disabled = false;
       btn.textContent = prevLabel;
