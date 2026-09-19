@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="app_title_full">Safelight — ブラウザ完結の画像ツール</title>
 <link rel="icon" type="image/png" href="favicon.png">
+<script>
+  // CSSが読み込まれる前にテーマ属性を確定させ、切り替え時のチラつきを防ぐ
+  (function(){
+    try{
+      var t = localStorage.getItem('safelight-theme');
+      document.documentElement.setAttribute('data-theme', (t === 'light') ? 'light' : 'dark');
+    }catch(e){}
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -21,6 +30,7 @@
   <div class="header-right">
     <a class="back-link" href="https://daigorou-addon.github.io/daigorou-tools/" data-i18n="back_to_top">← Daigorou-Toolsに戻る</a>
     <p data-i18n="app_tagline">すべての処理はブラウザ内で完結。アップロード一切なし。</p>
+    <button id="themeToggleBtn" class="theme-toggle" data-i18n-title="theme_toggle_title" title="表示テーマを切り替え">☀</button>
     <select id="langSelect" class="lang-select">
       <option value="ja">日本語</option>
       <option value="en">English</option>

@@ -24,6 +24,42 @@
   --sans:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
 }
 
+/* ダーク/ライトテーマ切り替え。デフォルトはダーク */
+html[data-theme="dark"]{
+  --dark:#0b0f13;
+  --dark-2:#0e1318;
+  --panel:#131920;
+  --panel-2:#171f27;
+  --raised:#1c242c;
+  --paper:#eef3f6;
+  --ink:#d7dee4;
+  --ink-dim:#b7c1c9;
+  --line:#26303a;
+  --line-soft:#1c242c;
+  --muted:#7c8894;
+  --safelight:#29e0c4;
+  --safelight-2:#12a894;
+  --accent-ink:#04241f;
+  --danger:#e05a3a;
+}
+html[data-theme="light"]{
+  --dark:#ffffff;
+  --dark-2:#f3f5f6;
+  --panel:#ffffff;
+  --panel-2:#f1f3f4;
+  --raised:#e7eaec;
+  --paper:#12181f;
+  --ink:#222a33;
+  --ink-dim:#4c5866;
+  --line:#dbe0e3;
+  --line-soft:#e9ecee;
+  --muted:#828d99;
+  --safelight:#0f9c8c;
+  --safelight-2:#0c7c70;
+  --accent-ink:#ffffff;
+  --danger:#c8442a;
+}
+
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{
@@ -74,6 +110,20 @@ header .lang-select{
   cursor:pointer;
 }
 header .lang-select:focus{outline:2px solid var(--safelight);outline-offset:1px;}
+header .theme-toggle{
+  width:30px; height:30px;
+  flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--panel-2);
+  color:var(--ink-dim);
+  font-size:15px;
+  line-height:1;
+  cursor:pointer;
+  padding:0;
+}
+header .theme-toggle:hover{ border-color:var(--safelight); color:var(--ink); }
 header .brand .mark{
   position:relative;
   display:inline-flex;
@@ -283,7 +333,7 @@ input[type=file]{display:none;}
   overflow:hidden;
   max-height:504px;
 }
-.canvas-wrap canvas, .canvas-wrap > div{
+.canvas-wrap canvas, .canvas-wrap > div:not(.wrap-placeholder){
   background:
     linear-gradient(45deg,#3a3630 25%,transparent 25%),
     linear-gradient(-45deg,#3a3630 25%,transparent 25%),

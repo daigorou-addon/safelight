@@ -93,6 +93,7 @@ ja: {
   pdf_meta_default: "追加した順に1画像＝1ページのPDFになります",
   msg_pdf_need_images: "画像を追加してください",
   msg_pdf_done: "{count}ページのPDFを作成しました（{size}）",
+  theme_toggle_title: "表示テーマを切り替え（ライト/ダーク）",
 },
 
 en: {
@@ -183,6 +184,7 @@ en: {
   pdf_meta_default: "Each image becomes one page, in the order added",
   msg_pdf_need_images: "Add images first",
   msg_pdf_done: "Created a {count}-page PDF ({size})",
+  theme_toggle_title: "Switch theme (light/dark)",
 },
 
 ko: {
@@ -273,6 +275,7 @@ ko: {
   pdf_meta_default: "추가한 순서대로 1장＝1페이지의 PDF가 됩니다",
   msg_pdf_need_images: "이미지를 추가해 주세요",
   msg_pdf_done: "{count}페이지 PDF를 생성했습니다（{size}）",
+  theme_toggle_title: "테마 전환(라이트/다크)",
 },
 
 "zh-CN": {
@@ -363,6 +366,7 @@ ko: {
   pdf_meta_default: "按添加顺序，1张图片＝1页PDF",
   msg_pdf_need_images: "请先添加图片",
   msg_pdf_done: "已生成{count}页的PDF（{size}）",
+  theme_toggle_title: "切换主题（浅色/深色）",
 },
 
 "zh-TW": {
@@ -453,6 +457,7 @@ ko: {
   pdf_meta_default: "依新增順序，1張圖片＝1頁PDF",
   msg_pdf_need_images: "請先新增圖片",
   msg_pdf_done: "已建立{count}頁的PDF（{size}）",
+  theme_toggle_title: "切換主題（淺色/深色）",
 },
 
 es: {
@@ -543,6 +548,7 @@ es: {
   pdf_meta_default: "Cada imagen se convierte en una página, en el orden en que se añadió",
   msg_pdf_need_images: "Añade imágenes primero",
   msg_pdf_done: "PDF de {count} páginas creado ({size})",
+  theme_toggle_title: "Cambiar tema (claro/oscuro)",
 },
 
 };
@@ -583,6 +589,10 @@ function applyI18n(lang){
     if(el.tagName === 'TITLE'){ document.title = val; }
     else { el.textContent = val; }
   });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    el.title = t(key);
+  });
   const sel = document.getElementById('langSelect');
   if(sel) sel.value = currentLang;
 }
@@ -593,4 +603,26 @@ document.addEventListener('DOMContentLoaded', () => {
   if(sel){
     sel.addEventListener('change', () => applyI18n(sel.value));
   }
+});
+
+// ---- 表示テーマ(ライト/ダーク) ----
+function detectTheme(){
+  const saved = localStorage.getItem('safelight-theme');
+  if(saved === 'light' || saved === 'dark') return saved;
+  return 'dark'; // デフォルトはダーク
+}
+let currentTheme = detectTheme();
+function applyTheme(theme){
+  currentTheme = (theme === 'dark') ? 'dark' : 'light';
+  localStorage.setItem('safelight-theme', currentTheme);
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  const btn = document.getElementById('themeToggleBtn');
+  if(btn){
+    btn.textContent = currentTheme === 'dark' ? '☾' : '☀';
+  }
+}
+applyTheme(currentTheme);
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('themeToggleBtn');
+  if(btn) btn.addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
 });
